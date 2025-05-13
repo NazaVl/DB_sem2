@@ -6,7 +6,7 @@ from models import Base, WeatherRecord, Wind, MoonPhaseEnum
 from sqlalchemy.exc import OperationalError, SQLAlchemyError
 
 
-DATABASE_URL = "postgresql://postgres:postgres/lab3"
+DATABASE_URL = "postgresql://postgres:postgres@localhost/lab3"
 
 
 def parse_datetime_safe(dt_str):
@@ -43,6 +43,19 @@ def record_exists(session, country, location_name, last_updated):
         location_name=location_name,
         last_updated=last_updated
     ).first()
+
+
+def is_it_worth_going_out(wind_kph: float, gust_kph: float) -> bool:
+    return wind_kph <= 25.0 and gust_kph <= 35.0
+
+
+def update_is_it_worth(session):
+    winds = session.query(Wind).filter(Wind.is_good_for_walk == None).all()
+    for wind in winds:
+        wind.is_good_for_walk = is_it_worth_going_out(wind.wind_kph, wind.gust_kph)
+    session.commit()
+    print(f"Оновлено {len(winds)} записів у wind: is_good_for_walk")
+
 
 
 def load_data(session, csv_file):
@@ -113,6 +126,7 @@ def main():
     else:
         print("Not empty")
 
+    update_is_it_worth(session)
 
 if __name__ == "__main__":
     main()

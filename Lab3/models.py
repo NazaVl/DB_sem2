@@ -49,6 +49,6 @@ class Wind(Base):
     wind_direction = Column(String)
     gust_mph = Column(Float)
     gust_kph = Column(Float)
-
+    is_good_for_walk = Column(Boolean)
     
     weather = relationship("WeatherRecord", back_populates="wind")
