@@ -54,8 +54,43 @@ def update_is_it_worth(session):
     for wind in winds:
         wind.is_good_for_walk = is_it_worth_going_out(wind.wind_kph, wind.gust_kph)
     session.commit()
-    print(f"Оновлено {len(winds)} записів у wind: is_good_for_walk")
 
+
+def find_data_about_weather(session):
+    from sqlalchemy import func
+
+    country = input("Country: ").strip()
+    date_str = input("date (YYYY-MM-DD): ").strip()
+
+    try:
+        target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
+        print("Invalid data input.")
+        return
+
+    records = (
+        session.query(WeatherRecord)
+        .join(Wind)
+        .filter(
+            func.lower(WeatherRecord.country) == country.lower(),
+            func.date(WeatherRecord.last_updated) == target_date
+        )
+        .all()
+    )
+
+    if not records:
+        print("No data.")
+        return
+
+    for rec in records:
+        print(f"\nPlaces: {rec.location_name}, {rec.country}")
+        print(f"last_updated: {rec.last_updated}")
+        print(f"humidity: {rec.humidity}")
+        print(f"moon_phase: {rec.moon_phase}")
+        print(f"sunrise: {rec.sunrise}")
+        print(f"wind_kph: {rec.wind.wind_kph}, wind_direction: {rec.wind.wind_direction}")
+        print(f"gust_kph: {rec.wind.gust_kph}")
+        print(f"Is it worth going out?: {'Yep' if rec.wind.is_good_for_walk else 'no'}")
 
 
 def load_data(session, csv_file):
@@ -126,7 +161,7 @@ def main():
     else:
         print("Not empty")
 
-    update_is_it_worth(session)
+    find_data_about_weather(session)
 
 if __name__ == "__main__":
     main()
